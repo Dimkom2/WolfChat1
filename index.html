@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wolf Messenger</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --tg-theme-bg-color: #000000;
+            --tg-theme-text-color: #ffffff;
+            --tg-theme-hint-color: #666666;
+            --tg-theme-link-color: #ffffff;
+            --tg-theme-button-color: #ffffff;
+            --tg-theme-button-text-color: #000000;
+            --tg-theme-secondary-bg-color: #111111;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 500;
+            background: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Страницы */
+        .page {
+            display: none;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        /* Страница входа */
+        #login-page {
+            background: #000000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 0 40px;
+            text-align: center;
+        }
+
+        .login-logo {
+            width: 180px;
+            height: 180px;
+            margin-bottom: 50px;
+            background: #333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            margin: 0 auto 50px auto;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 16px 0;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #333;
+            color: #ffffff;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .login-input::placeholder {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .login-input:focus {
+            border-bottom-color: #ffffff;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 16px;
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .login-button:hover {
+            background: #e0e0e0;
+        }
+
+        .login-button:active {
+            transform: scale(0.98);
+        }
+
+        .error-message {
+            color: #ff4444;
+            margin-top: 16px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        /* Основной интерфейс */
+        #app {
+            background: var(--tg-theme-bg-color);
+        }
+
+        /* Скрываем скроллбары */
+        ::-webkit-scrollbar {
+            width: 0;
+            background: transparent;
+        }
+
+        /* Панель контактов */
+        .contacts-panel {
+            width: 35%;
+            min-width: 320px;
+            background: #000000;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Стильный ограничитель между панелями */
+        .contacts-panel::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                transparent 0%, 
+                #333 20%, 
+                #333 80%, 
+                transparent 100%);
+        }
+
+        .panel-header {
+            padding: 30px 24px;
+            border-bottom: 1px solid #111;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-weight: 600;
+            font-size: 18px;
+            letter-spacing: 1px;
+        }
+
+        .wolf-logo-small {
+            width: 32px;
+            height: 32px;
+            background: #333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .contacts-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .contact {
+            display: flex;
+            align-items: center;
+            padding: 18px 24px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #111;
+        }
+
+        .contact:hover {
+            background: #111111;
+        }
+
+        .contact.active {
+            background: #111111;
+        }
+
+        .contact-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #222222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            margin-right: 16px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .status-online::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            background: #00ff00;
+            border-radius: 50%;
+            border: 2px solid #000;
+        }
+
+        .status-offline::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            background: #666;
+            border-radius: 50%;
+            border: 2px solid #000;
+        }
+
+        .contact-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .contact-name {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .last-message {
+            font-size: 13px;
+            color: #666666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            padding: 24px;
+            background: #000000;
+            border-top: 1px solid #111;
+        }
+
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #222222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .profile-status {
+            font-size: 12px;
+            color: #00ff00;
+            margin-top: 2px;
+        }
+
+        /* Окно чата */
+        .chat-window {
+            flex: 1;
+            background: #000000;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            padding: 24px 30px;
+            background: #000000;
+            border-bottom: 1px solid #111;
+        }
+
+        /* Кнопка назад в чате */
+        .header-back {
+            display: none;
+            margin-right: 16px;
+            cursor: pointer;
+        }
+
+        .chat-partner {
+            display: flex;
+            align-items: center;
+        }
+
+        .partner-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #222222;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            margin-right: 16px;
+        }
+
+        .partner-info {
+            flex: 1;
+        }
+
+        .partner-name {
+            font-weight: 600;
+            font-size: 17px;
+            margin-bottom: 2px;
+        }
+
+        .partner-status {
+            font-size: 13px;
+            color: #666666;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: #000000;
+        }
+
+        .message {
+            display: flex;
+            max-width: 70%;
+        }
+
+        .message.received {
+            align-self: flex-start;
+        }
+
+        .message.sent {
+            align-self: flex-end;
+        }
+
+        .message-content {
+            padding: 14px 18px;
+            border-radius: 18px;
+            position: relative;
+        }
+
+        .message.received .message-content {
+            background: #111111;
+            color: #ffffff;
+        }
+
+        .message.sent .message-content {
+            background: #222222;
+            color: #ffffff;
+        }
+
+        .message-text {
+            font-size: 15px;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.6;
+            text-align: right;
+        }
+
+        .input-container {
+            padding: 24px 30px;
+            background: #000000;
+            border-top: 1px solid #111;
+        }
+
+        .message-input-wrapper {
+            display: flex;
+            align-items: center;
+            background: #111111;
+            border-radius: 25px;
+            padding: 6px;
+        }
+
+        .message-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 14px 20px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            color: #ffffff;
+        }
+
+        .message-input::placeholder {
+            color: #666666;
+        }
+
+        .message-input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .send-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .send-button:hover {
+            opacity: 0.8;
+        }
+
+        .send-button:active {
+            transform: scale(0.95);
+        }
+
+        .send-button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Приветственное сообщение */
+        .welcome-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            opacity: 0.7;
+        }
+
+        .welcome-logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            background: #333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            opacity: 0.5;
+        }
+
+        .welcome-text {
+            font-size: 18px;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .welcome-subtext {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Уведомление о загрузке */
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 768px) {
+            .contacts-panel {
+                width: 100%;
+                min-width: auto;
+            }
+            
+            .contacts-panel::after {
+                display: none;
+            }
+            
+            .chat-window {
+                display: none;
+            }
+            
+            .chat-window.active {
+                display: flex;
+            }
+            
+            .message {
+                max-width: 85%;
+            }
+            
+            .login-container {
+                padding: 0 24px;
+                max-width: 320px;
+            }
+            
+            .login-logo {
+                width: 140px;
+                height: 140px;
+                margin-bottom: 40px;
+            }
+            
+            .header-back {
+                display: block;
+            }
+            
+            .chat-header {
+                padding: 18px 20px;
+            }
+            
+            .panel-header {
+                padding: 20px;
+            }
+            
+            .logo {
+                font-size: 16px;
+            }
+            
+            .wolf-logo-small {
+                width: 28px;
+                height: 28px;
+            }
+        }
+
+        /* Адаптивность для ПК */
+        @media (min-width: 769px) {
+            #app {
+                display: flex !important;
+            }
+            
+            .contacts-panel {
+                display: flex !important;
+                width: 35%;
+            }
+            
+            .chat-window {
+                display: flex !important;
+                width: 65%;
+            }
+            
+            .header-back {
+                display: none !important;
+            }
+        }
+
+        /* ПРИНУДИТЕЛЬНЫЙ РЕЖИМ ПК */
+        @media (min-width: 769px) {
+            body {
+                min-width: 800px !important;
+                overflow: hidden !important;
+            }
+            
+            #app {
+                display: flex !important;
+                min-width: 800px !important;
+            }
+            
+            .contacts-panel {
+                display: flex !important;
+                width: 35% !important;
+                min-width: 280px !important;
+            }
+            
+            .chat-window {
+                display: flex !important;
+                width: 65% !important;
+                min-width: 520px !important;
+            }
+            
+            .header-back {
+                display: none !important;
+            }
+        }
+
+        /* Гарантируем что приложение всегда на весь экран */
+        #app {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Страница входа -->
+    <div id="login-page" class="page active">
+        <div class="login-container">
+            <div class="login-logo">WOLF</div>
+            <div class="input-group">
+                <input type="text" id="login" placeholder="ЛОГИН" class="login-input">
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" placeholder="ПАРОЛЬ" class="login-input">
+            </div>
+            <button onclick="checkPassword()" class="login-button">ВОЙТИ В СТАЮ</button>
+            <div id="error-message" class="error-message"></div>
+        </div>
+    </div>
+
+    <!-- Основной интерфейс мессенджера -->
+    <div id="app" class="page">
+        <!-- Панель контактов -->
+        <div class="contacts-panel">
+            <div class="panel-header">
+                <div class="logo">
+                    <div class="wolf-logo-small">W</div>
+                    <span>WOLF PACK</span>
+                </div>
+            </div>
+            
+            <div class="contacts-list" id="contactsList">
+                <div class="loading">Загрузка контактов...</div>
+            </div>
+            
+            <div class="user-profile">
+                <div class="profile-avatar" id="currentUserAvatar">?</div>
+                <div class="profile-info">
+                    <div class="profile-name" id="currentUserName">Не авторизован</div>
+                    <div class="profile-status" id="currentUserStatus">offline</div>
+                </div>
+                <button onclick="logout()" style="margin-left: 10px; padding: 5px 10px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer;">Выйти</button>
+            </div>
+        </div>
+
+        <!-- Основное окно чата -->
+        <div class="chat-window">
+            <div class="chat-header">
+                <div class="header-back" onclick="goBack()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                </div>
+                <div class="chat-partner">
+                    <div class="partner-avatar" id="partnerAvatar">?</div>
+                    <div class="partner-info">
+                        <div class="partner-name" id="partnerName">Выберите чат</div>
+                        <div class="partner-status" id="partnerStatus">offline</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="messages-container" id="messagesContainer">
+                <div class="welcome-message">
+                    <div class="welcome-logo">W</div>
+                    <div class="welcome-text">Wolf Messenger</div>
+                    <div class="welcome-subtext">Войдите в систему для начала работы</div>
+                </div>
+            </div>
+            
+            <div class="input-container">
+                <div class="message-input-wrapper">
+                    <input type="text" class="message-input" id="messageInput" placeholder="Напишите сообщение..." disabled>
+                    <button class="send-button" onclick="sendMessage()" disabled>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M2 21L23 12L2 3V10L17 12L2 14V21Z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Проверяем, находимся ли мы в Telegram
+        const isTelegram = typeof window.Telegram !== 'undefined' && window.Telegram.WebApp;
+        const tg = isTelegram ? window.Telegram.WebApp : {
+            expand: () => console.log('Telegram: expand'),
+            ready: () => console.log('Telegram: ready')
+        };
+
+        // Конфигурация
+        const CONFIG = {
+            BOT_TOKEN: '8414918030:AAG32jw18WxxZ-ALE1SN0rd0BI8m4nzlS5Q',
+            
+            validAccounts: [
+                { login: "247", password: "Utka2022@", name: "Агент 247", chatId: "247" },
+                { login: "001", password: "Pomidor:2022@", name: "Организатор", chatId: "001" },
+                { login: "749", password: "Dinozavr456@", name: "Агент 749", chatId: "749" }
+            ]
+        };
+
+        let currentUser = null;
+        let currentChat = null;
+
+        // Инициализация приложения
+        function initApp() {
+            console.log('🚀 Инициализация Wolf Messenger...');
+            
+            if (isTelegram) {
+                tg.expand();
+                tg.ready();
+            }
+            
+            initInterface();
+            checkAuthOnLoad();
+        }
+
+        function initInterface() {
+            // Принудительно устанавливаем ПК режим
+            setTimeout(forceDesktopMode, 100);
+        }
+
+        // ПРИНУДИТЕЛЬНЫЙ РЕЖИМ ПК
+        function forceDesktopMode() {
+            if (window.innerWidth > 768) {
+                const contactsPanel = document.querySelector('.contacts-panel');
+                const chatWindow = document.querySelector('.chat-window');
+                
+                if (contactsPanel) {
+                    contactsPanel.style.display = 'flex';
+                    contactsPanel.style.width = '35%';
+                }
+                
+                if (chatWindow) {
+                    chatWindow.style.display = 'flex';
+                    chatWindow.style.width = '65%';
+                }
+                
+                const headerBack = document.querySelector('.header-back');
+                if (headerBack) headerBack.style.display = 'none';
+            }
+        }
+
+        // ПРОВЕРКА ПАРОЛЯ
+        function checkPassword() {
+            const login = document.getElementById('login').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
+
+            console.log('Попытка входа:', login);
+
+            const isValid = CONFIG.validAccounts.find(acc => acc.login === login && acc.password === password);
+
+            if (isValid) {
+                errorMessage.textContent = '';
+                
+                currentUser = {
+                    login: login,
+                    name: isValid.name,
+                    chatId: isValid.chatId
+                };
+                
+                localStorage.setItem('wolf_current_user', JSON.stringify(currentUser));
+                
+                showPage('app');
+                loadUserInterface();
+                console.log('Успешный вход:', currentUser.name);
+                
+            } else {
+                errorMessage.textContent = 'ОШИБКА: Неверный логин или пароль';
+                console.log('Ошибка входа для:', login);
+                document.getElementById('password').value = '';
+            }
+        }
+
+        // ЗАГРУЗКА ИНТЕРФЕЙСА ПОЛЬЗОВАТЕЛЯ
+        function loadUserInterface() {
+            if (!currentUser) {
+                showPage('login-page');
+                return;
+            }
+            
+            const currentUserAvatar = document.getElementById('currentUserAvatar');
+            const currentUserName = document.getElementById('currentUserName');
+            const currentUserStatus = document.getElementById('currentUserStatus');
+            
+            if (currentUserAvatar) currentUserAvatar.textContent = currentUser.login;
+            if (currentUserName) currentUserName.textContent = currentUser.name;
+            if (currentUserStatus) currentUserStatus.textContent = 'online';
+            
+            loadContacts();
+        }
+
+        // ЗАГРУЗКА КОНТАКТОВ
+        function loadContacts() {
+            const contactsList = document.getElementById('contactsList');
+            
+            if (!currentUser || !contactsList) {
+                return;
+            }
+            
+            const contacts = CONFIG.validAccounts.filter(acc => acc.login !== currentUser.login);
+            
+            if (contacts.length === 0) {
+                contactsList.innerHTML = '<div class="loading">Нет доступных контактов</div>';
+                return;
+            }
+            
+            contactsList.innerHTML = '';
+            
+            contacts.forEach(contact => {
+                const contactElement = document.createElement('div');
+                contactElement.className = 'contact';
+                contactElement.dataset.userId = contact.login;
+                
+                const chatHistory = loadChatHistoryFromStorage(currentUser.login, contact.login);
+                const lastMessage = chatHistory.length > 0 ? chatHistory[chatHistory.length - 1].text : 'Нет сообщений';
+                
+                contactElement.innerHTML = `
+                    <div class="contact-avatar status-online">${contact.login}</div>
+                    <div class="contact-info">
+                        <div class="contact-name">${contact.name}</div>
+                        <div class="last-message">${lastMessage}</div>
+                    </div>
+                `;
+                
+                contactElement.addEventListener('click', () => openChat(contact));
+                contactsList.appendChild(contactElement);
+            });
+        }
+
+        // ОТКРЫТИЕ ЧАТА
+        function openChat(contact) {
+            if (!currentUser) {
+                showPage('login-page');
+                return;
+            }
+            
+            currentChat = contact;
+            
+            const partnerAvatar = document.getElementById('partnerAvatar');
+            const partnerName = document.getElementById('partnerName');
+            const partnerStatus = document.getElementById('partnerStatus');
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.querySelector('.send-button');
+            
+            if (partnerAvatar) partnerAvatar.textContent = contact.login;
+            if (partnerName) partnerName.textContent = contact.name;
+            if (partnerStatus) partnerStatus.textContent = 'online';
+            if (messageInput) messageInput.disabled = false;
+            if (sendButton) sendButton.disabled = false;
+            
+            loadChatHistory(contact.login);
+            
+            if (window.innerWidth <= 768) {
+                showChatWindow();
+            }
+            
+            document.querySelectorAll('.contact').forEach(c => c.classList.remove('active'));
+            const activeContact = document.querySelector(`[data-user-id="${contact.login}"]`);
+            if (activeContact) activeContact.classList.add('active');
+        }
+
+        // ЗАГРУЗКА ИСТОРИИ ЧАТА
+        function loadChatHistory(contactId) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            const chatHistory = loadChatHistoryFromStorage(currentUser.login, contactId);
+            
+            displayMessages(chatHistory);
+        }
+
+        // ЗАГРУЗКА ИСТОРИИ ИЗ LOCALSTORAGE
+        function loadChatHistoryFromStorage(user1, user2) {
+            const chatKey = `wolf_chat_${[user1, user2].sort().join('_')}`;
+            const history = localStorage.getItem(chatKey);
+            return history ? JSON.parse(history) : [];
+        }
+
+        // СОХРАНЕНИЕ ИСТОРИИ В LOCALSTORAGE
+        function saveChatHistoryToStorage(user1, user2, messages) {
+            const chatKey = `wolf_chat_${[user1, user2].sort().join('_')}`;
+            localStorage.setItem(chatKey, JSON.stringify(messages));
+        }
+
+        // ОТОБРАЖЕНИЕ СООБЩЕНИЙ
+        function displayMessages(messages) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            messagesContainer.innerHTML = '';
+            
+            if (messages.length === 0) {
+                showWelcomeMessage();
+                return;
+            }
+            
+            messages.forEach(msg => {
+                addMessageToUI(msg.text, msg.sender === currentUser.login ? 'sent' : 'received', msg.time, false);
+            });
+            
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // ОТПРАВКА СООБЩЕНИЯ
+        function sendMessage() {
+            if (!currentUser || !currentChat) {
+                showPage('login-page');
+                return;
+            }
+            
+            const messageInput = document.getElementById('messageInput');
+            const text = messageInput.value.trim();
+            
+            if (!text) return;
+
+            const message = {
+                text: text,
+                sender: currentUser.login,
+                receiver: currentChat.login,
+                time: getCurrentTime(),
+                type: 'sent'
+            };
+            
+            // Сохраняем в историю
+            saveMessageToHistory(currentUser.login, currentChat.login, message);
+            
+            // Добавляем в интерфейс
+            addMessageToUI(text, 'sent', message.time, true);
+            messageInput.value = '';
+            
+            // Обновляем последнее сообщение
+            updateLastMessage(currentChat.login, text);
+        }
+
+        // СОХРАНЕНИЕ СООБЩЕНИЯ В ИСТОРИЮ
+        function saveMessageToHistory(user1, user2, message) {
+            const history = loadChatHistoryFromStorage(user1, user2);
+            history.push(message);
+            saveChatHistoryToStorage(user1, user2, history);
+        }
+
+        // ДОБАВЛЕНИЕ СООБЩЕНИЯ В ИНТЕРФЕЙС
+        function addMessageToUI(text, type, time, shouldScroll = true) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            
+            const welcomeMsg = messagesContainer.querySelector('.welcome-message');
+            if (welcomeMsg) {
+                welcomeMsg.remove();
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="message-text">${text}</div>
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            
+            if (shouldScroll) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+
+        // ОБНОВЛЕНИЕ ПОСЛЕДНЕГО СООБЩЕНИЯ
+        function updateLastMessage(contactId, message) {
+            const contactElement = document.querySelector(`[data-user-id="${contactId}"]`);
+            if (contactElement) {
+                const lastMessageElement = contactElement.querySelector('.last-message');
+                if (lastMessageElement) {
+                    lastMessageElement.textContent = message;
+                }
+            }
+        }
+
+        // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+        function getCurrentTime() {
+            const now = new Date();
+            return now.getHours().toString().padStart(2, '0') + ':' + 
+                   now.getMinutes().toString().padStart(2, '0');
+        }
+
+        function showWelcomeMessage() {
+            const messagesContainer = document.getElementById('messagesContainer');
+            const chatName = currentChat ? currentChat.name : 'контактом';
+            messagesContainer.innerHTML = `
+                <div class="welcome-message">
+                    <div class="welcome-logo">W</div>
+                    <div class="welcome-text">Начните общение с ${chatName}</div>
+                    <div class="welcome-subtext">Сообщения сохраняются локально</div>
+                </div>
+            `;
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function goBack() {
+            if (window.innerWidth <= 768) {
+                hideChatWindow();
+            }
+        }
+
+        function showChatWindow() {
+            document.querySelector('.contacts-panel').style.display = 'none';
+            document.querySelector('.chat-window').style.display = 'flex';
+        }
+
+        function hideChatWindow() {
+            document.querySelector('.contacts-panel').style.display = 'flex';
+            document.querySelector('.chat-window').style.display = 'none';
+        }
+
+        // ПРОВЕРКА АВТОРИЗАЦИИ ПРИ ЗАГРУЗКЕ
+        function checkAuthOnLoad() {
+            const savedUser = localStorage.getItem('wolf_current_user');
+            console.log('Проверка авторизации:', savedUser);
+            
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    showPage('app');
+                    loadUserInterface();
+                    console.log('Пользователь авторизован:', currentUser.name);
+                } catch (e) {
+                    localStorage.removeItem('wolf_current_user');
+                    showPage('login-page');
+                }
+            } else {
+                console.log('Пользователь не авторизован');
+                showPage('login-page');
+            }
+        }
+
+        // ФУНКЦИЯ ВЫХОДА
+        function logout() {
+            currentUser = null;
+            currentChat = null;
+            localStorage.removeItem('wolf_current_user');
+            showPage('login-page');
+            
+            // Очищаем поля ввода
+            document.getElementById('login').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM загружен');
+            initApp();
+        });
+    </script>
+</body>
+</html>
